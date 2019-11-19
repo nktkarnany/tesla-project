@@ -145,7 +145,7 @@
         let mountainY = 440;
 
         let fft, // Allow us to analyze the song
-        numBars = 1024, // The number of bars to use; power of 2 from 16 to 1024
+        numBars = 512, // The number of bars to use; power of 2 from 16 to 1024
         song; // The p5 sound object
 
         // generating mountains
@@ -177,7 +177,7 @@
 
             // Draw Mountain
             canvasMountain = drawMountain();
-            
+
             fft = new p5.FFT();
             fft.waveform(numBars);
             fft.smooth(0.85);
@@ -214,9 +214,9 @@
             if (typeof song != "undefined" && song.isPlaying()) {
                 if(typeof fft != "undefined") {
                     var spectrum = fft.analyze();
-                    console.log(spectrum);
-                    noStroke();
-                    fill(colours[0]);
+                    // console.log(spectrum);
+                    stroke(colours[0]);
+                    noFill();
                     for(var i = 0; i < numBars; i++) {
                         var x = map(i, 0, numBars, 0, width/1.3);
                         var h = -height + map(spectrum[i], 0, 255, height, 0);
@@ -225,6 +225,23 @@
                     }
                 }
             }
+
+            // noStroke();
+            // fill(colours[0]);
+            // beginShape();
+            // vertex(30 + width / 2, 20 + height - 100);
+            // bezierVertex(80 + width / 2, 0 + height - 100, 80 + width / 2, 75 + height - 100, 30 + width / 2, 75 + height - 100);
+            // bezierVertex(50 + width / 2, 80 + height - 100, 60 + width / 2, 25 + height - 100, 30 + width / 2, 20 + height - 100);
+            // endShape();
+
+            // console.log(song.currentTime());
+            // console.log(song.duration());
+
+            // fill(colours[1]);
+            // noStroke();
+            // noFill();
+            // arc(width/2, height-150, 500, 150, PI, PI * 2, OPEN);
+            // arc(width/2, height-150, 350, 120, PI, PI * 2, OPEN);
 
             // if (loaded) {
 
