@@ -1,39 +1,36 @@
-// Variables to save audio data
-let audioContext;
-let analyser;
-let distortion;
-let gainNode;
-let buffer;
-let dataArray;
-let loaded = false;
 
-const canvas = 1080;
+// Arrays to save all the colors
 const colours = [];
 
+// Variables to store all the graphics(which is like a new canvas in p5)
 let canvasBg;
 let canvasYlines;
 let canvasSun;
 let canvasMountain;
-let cx;
-let cy;
-let movement = 0;
-const horizon = 540;
-let mountainY = 440;
 
+// variable to store movement of the terrain
+let movement = 0;
+
+// variable to store the y coordinate for horizon 
+const horizon = 540;
+
+// variable to store the amplitude of sound file loaded
 let amplitude;
 
-let prevLevels = new Array(60);
+// Array to store the number of vertical lines to show whem music is playing
+let prevLevels = new Array(45);
 
+// An object to store the meters(path elements) in the music progress bar svg
 let meters;
+
+// Variable to store the number of meters in the svg
+const numMeters = 14;
 
 // Setup
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  //createCanvas(canvas, canvas);
   pixelDensity(1);
 
-  cx = width / 2;
-  cy = height / 2;
   colours[0] = color(164, 0, 182); // Pink
   colours[1] = color(0, 46, 68); // Night blue
   colours[2] = color(0, 255, 248); // Neon blue
@@ -50,17 +47,38 @@ function setup() {
   amplitude = new p5.Amplitude();
   amplitude.smooth(0.6);
 
-  // fft = new p5.FFT();
-  // fft.smooth(.90);
+  // playing the song here
+  song.play();
+  amplitude.setInput(song);
 
-  let a = document.getElementById("svgDiv");
-  meters = a.getElementsByTagName("path");
+  // Getting all the meters from the svg using their id's
+  let metersSvg = document.getElementById("svgDiv");
+  // meters is an object
+  meters = metersSvg.getElementsByTagName("path");
+
+  // Adding click listener on each of the meters
+  for(let i = 0; i < meters.length; i++) {
+
+    meters[i].addEventListener("click", function(e) {
+      console.log(song.isPlaying());
+      if (typeof song != "undefined" && song.isPlaying()) {
+        const currDuration = song.duration() / numMeters;
+        // Using regex to get the number from id of each meter element
+        let matches = this.id.match(/(\d+)/);
+        if (matches) {
+          song.jump(matches[0] * currDuration);
+        }
+
+      }
+    });
+
+  }
+
 }
 
 function draw() {
   image(canvasBg, 0, 0);
   image(canvasSun, width / 2 - canvasSun.width / 2, 60);
-  // image(canvasMountain, cx - (canvasMountain.width / 2), mountainY);
 
   noStroke();
   fill(colours[1]);
@@ -73,26 +91,23 @@ function draw() {
     line(0, yOffset, width, yOffset);
   }
 
-  // Speed around 98bpm
+  // Speed around 98bpm, Speed of terrain
   movement += 0.0875;
   if (movement >= 1) {
     movement = 0;
   }
 
-  mountainY -= 0.03;
-  if (mountainY <= 333) {
-    mountainY = 440;
-  }
+  /* Code to draw the amplitude lines STARTS HERE */
 
   let level = amplitude.getLevel();
 
   // rectangle variables
-  let spacing = 10;
+  let spacing = 5;
   let w = width / (prevLevels.length * spacing);
 
+  // height range of the amplitude rectanges
   let minHeight = 2;
   let maxHeight = 300;
-  let roundness = 20;
 
   // add new level to end of array
   prevLevels.push(level);
@@ -113,48 +128,26 @@ function draw() {
     rect(width - x, horizon, w, -h);
   }
 
+  /* Code to draw the amplitude lines ENDS HERE */
+
+  /* Code to show the music progress in meters STARTS HERE */
+
   if (typeof song != "undefined" && song.isPlaying()) {
 
-    let c = song.duration()/14;
+    let c = song.duration() / numMeters;
     let currDuration = Math.round(song.currentTime()/c);
 
     for(let i = 0; i < meters.length; i++) {
-      let meter = meters[14 - i - 1];
+      let meter = meters[numMeters - i - 1];
       if (i <= currDuration) {
         meter.classList.remove("off");
       } else {
         meter.classList.add("off");
       }
     }
-
-    if (typeof fft != "undefined") {
-      // let spectrum = fft.analyze();
-      // fill(colours[1]);
-      // stroke('rgba(0,255,248,0.3)');
-      // const numBars = 128;
-      // for(var i = 0; i < numBars; i++) {
-      //   var x = map(i, 0, numBars, 0, width/1.3);
-      //   var h = -height + map(spectrum[i], 0, 255, height, 0);
-      //   rect(x, horizon, width / numBars, h/3);
-      //   rect(width-x, horizon, width / numBars, h/3);
-      // }
-
-      // beginShape();
-      // stroke(colours[2]);
-      // vertex(0, horizon);
-
-      // for (let i = 0; i < spectrum.length - 1; i += 56) {
-      //   vertex(map(i, 0, spectrum.length - 1, 0, width / 1.3), map(spectrum[i], 0, 255, horizon, 200));
-      // }
-
-      // for (let i = spectrum.length - 1; i >= 0; i -= 56) {
-      //   vertex(map(i, spectrum.length - 1, 0, width / 4, width), map(spectrum[i], 0, 255, horizon, 200));
-      // }
-
-      // vertex(width, horizon);
-      // endShape();
-    }
   }
+
+  /* Code to show the music progress in meters ENDS HERE */
 }
 
 function easeInExpo(t, b, c, d) {
@@ -212,6 +205,10 @@ function drawSun() {
 function drawYlines() {
   // Horizon
   const yLines = createGraphics(width, height);
+
+  let cx = width / 2;
+  let cy = height / 2;
+
   // Vertical lines
   yLines.stroke(colours[0]);
   yLines.line(0, horizon, width, horizon);
@@ -222,14 +219,6 @@ function drawYlines() {
     yLines.line(cx - xOffset, horizon, cx - xOffset * 10, height);
   }
   return yLines;
-}
-
-// Event listener added to listen onclick and load a song
-window.addEventListener("click", onClick);
-
-function onClick() {
-  song.play();
-  amplitude.setInput(song);
 }
 
 function preload() {
