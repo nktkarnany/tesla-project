@@ -20,6 +20,12 @@ let movement = 0;
 const horizon = 540;
 let mountainY = 440;
 
+let amplitude;
+
+let prevLevels = new Array(60);
+
+let meters;
+
 // Setup
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -41,8 +47,14 @@ function setup() {
   // Draw vertical lines
   canvasYlines = drawYlines();
 
-  fft = new p5.FFT();
-  fft.smooth(.90);
+  amplitude = new p5.Amplitude();
+  amplitude.smooth(0.6);
+
+  // fft = new p5.FFT();
+  // fft.smooth(.90);
+
+  let a = document.getElementById("svgDiv");
+  meters = a.getElementsByTagName("path");
 }
 
 function draw() {
@@ -62,7 +74,7 @@ function draw() {
   }
 
   // Speed around 98bpm
-  movement += 0.1275;
+  movement += 0.0875;
   if (movement >= 1) {
     movement = 0;
   }
@@ -72,31 +84,75 @@ function draw() {
     mountainY = 440;
   }
 
+  let level = amplitude.getLevel();
+
+  // rectangle variables
+  let spacing = 10;
+  let w = width / (prevLevels.length * spacing);
+
+  let minHeight = 2;
+  let maxHeight = 300;
+  let roundness = 20;
+
+  // add new level to end of array
+  prevLevels.push(level);
+
+  // remove first item in array
+  prevLevels.splice(0, 1);
+
+  // loop through all the previous levels
+  for (let i = 0; i < prevLevels.length; i++) {
+
+    let x = map(i, prevLevels.length, 0, width/2, width);
+    let h = map(prevLevels[i], 0, 0.5, minHeight, maxHeight);
+
+    fill(colours[0]);
+    stroke(colours[0]);
+
+    rect(x, horizon, w, -h);
+    rect(width - x, horizon, w, -h);
+  }
+
   if (typeof song != "undefined" && song.isPlaying()) {
+
+    let c = song.duration()/14;
+    let currDuration = Math.round(song.currentTime()/c);
+
+    for(let i = 0; i < meters.length; i++) {
+      let meter = meters[14 - i - 1];
+      if (i <= currDuration) {
+        meter.classList.remove("off");
+      } else {
+        meter.classList.add("off");
+      }
+    }
+
     if (typeof fft != "undefined") {
-      let spectrum = fft.analyze();
-      console.log(spectrum);
-      fill(colours[1]);
+      // let spectrum = fft.analyze();
+      // fill(colours[1]);
+      // stroke('rgba(0,255,248,0.3)');
+      // const numBars = 128;
       // for(var i = 0; i < numBars; i++) {
-      //     var x = map(i, 0, numBars, 0, width/1.3);
-      //     var h = -height + map(spectrum[i], 0, 255, height, 0);
-      //     rect(x, horizon, width / numBars, h/3);
-      //     rect(width-x, horizon, width / numBars, h/3);
+      //   var x = map(i, 0, numBars, 0, width/1.3);
+      //   var h = -height + map(spectrum[i], 0, 255, height, 0);
+      //   rect(x, horizon, width / numBars, h/3);
+      //   rect(width-x, horizon, width / numBars, h/3);
       // }
 
-      beginShape();
-      stroke(colours[2]);
-      vertex(0, horizon);
-      for (let i = 1; i < width/2; i += 32) {
-        vertex(i, map(spectrum[i], 0, 255, horizon, 200));
-      }
+      // beginShape();
+      // stroke(colours[2]);
+      // vertex(0, horizon);
 
-      for (let i=width/2; i<width; i +=32) {
-        vertex(i, map(spectrum[i], 0, 255, horizon, 200));
-      }
+      // for (let i = 0; i < spectrum.length - 1; i += 56) {
+      //   vertex(map(i, 0, spectrum.length - 1, 0, width / 1.3), map(spectrum[i], 0, 255, horizon, 200));
+      // }
 
-      vertex(width, horizon);
-      endShape();
+      // for (let i = spectrum.length - 1; i >= 0; i -= 56) {
+      //   vertex(map(i, spectrum.length - 1, 0, width / 4, width), map(spectrum[i], 0, 255, horizon, 200));
+      // }
+
+      // vertex(width, horizon);
+      // endShape();
     }
   }
 }
@@ -173,8 +229,21 @@ window.addEventListener("click", onClick);
 
 function onClick() {
   song.play();
+  amplitude.setInput(song);
 }
 
 function preload() {
   song = loadSound("./audio/toto.mp3");
+}
+
+function logMap(val, inMin, inMax, outMin, outMax) {
+  var offset = 0;
+  if (inMax === 0 || inMin === 0) {
+    offset = 1;
+    inMin += offset;
+    inMax += offset;
+  }
+  var a = (outMin - outMax) / Math.log10(inMin / inMax);
+  var b = outMin - a * Math.log10(inMin);
+  return a * Math.log10(val + offset) + b;
 }
