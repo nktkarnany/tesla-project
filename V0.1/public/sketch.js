@@ -1,4 +1,9 @@
 
+// Array to store all songs
+const songsPath = ['./audio/toto.mp3', './audio/final.mp3', './audio/black.mp3'];
+let songs = [];
+let songPlaying = 0;
+
 // Arrays to save all the colors
 const colours = [];
 
@@ -12,7 +17,7 @@ let canvasMountain;
 let movement = 0;
 
 // variable to store the y coordinate for horizon 
-const horizon = 540;
+const horizon = 740;
 
 // variable to store the amplitude of sound file loaded
 let amplitude;
@@ -74,6 +79,12 @@ function setup() {
   // playing the song here
   pauseIcon.style.display = "none";
   resetMeters();
+
+  svgPaths[14].addEventListener("click", playNext);
+  svgPaths[15].addEventListener("click", playNext);
+
+  svgPaths[19].addEventListener("click", playPrev);
+  svgPaths[20].addEventListener("click", playPrev);
 
   // Adding click listener on each of the meters
   for(let i = 0; i < meters.length; i++) {
@@ -241,12 +252,11 @@ function drawYlines() {
 
 function playSwitch() {
   if(song.isPlaying()) {
-    song.pause();
+    pauseSong();
     playIcon.style.display = "block";
     pauseIcon.style.display = "none";
   } else {
-    song.play();
-    amplitude.setInput(song);
+    playSong();
     pauseIcon.style.display = "block";
     playIcon.style.display = "none";
   }
@@ -255,7 +265,9 @@ function playSwitch() {
 function keyPressed() {
   if (keyCode == 32) playSwitch();
   if (keyCode == 82) reset();
-  console.log(keyCode);
+  if (keyCode == 39) playNext();
+  if (keyCode == 37) playPrev();
+  // if (keyCode == 83) start();
 }
 
 function reset() {
@@ -275,7 +287,56 @@ function resetMeters() {
 }
 
 function preload() {
-  song = loadSound("./audio/toto.mp3");
+  song = loadSound(songsPath[songPlaying]);
+  for (let i = 0; i < songsPath.length; i++) {
+    songs.push(loadSound(songsPath[i]));
+  }
+}
+
+function playNext() {
+  if (typeof song != "undefined" && song.isPlaying()) {
+    song.stop();
+    song = songs[nextSong(1)];
+    playSong();
+  } else {
+    playSong();
+  }
+}
+
+function playPrev() {
+  if (typeof song != "undefined" && song.isPlaying()) {
+    song.stop();
+    song = songs[nextSong(-1)];
+    playSong();
+  } else {
+    playSong();
+  }
+}
+
+function nextSong(flag) {
+  if (flag > 0) {
+    if (songPlaying == songsPath.length - 1) {
+      songPlaying = 0;
+    } else {
+      songPlaying++;
+    }
+  } else {
+    if (songPlaying == 0) {
+      songPlaying = songsPath.length - 1;
+    } else {
+      songPlaying--;
+    }
+  }
+  return songPlaying;
+}
+
+function playSong() {
+  song.play();
+  amplitude.setInput(song);
+}
+
+function pauseSong() {
+  song.pause();
 }
 
 function logMap(val, inMin, inMax, outMin, outMax) {
@@ -289,3 +350,40 @@ function logMap(val, inMin, inMax, outMin, outMax) {
   var b = outMin - a * Math.log10(inMin);
   return a * Math.log10(val + offset) + b;
 }
+
+/* Code For Lights STARTS HERE */
+
+let socket = io.connect(window.location.hostname + ':' + 3000);
+
+const lights = { turnedOn: 0 };
+
+let lastLight = 0;
+
+function setLight(value, id) {
+    socket.emit('status', {
+        on: value,
+        id: id,
+    });
+}
+
+function start() {
+    TweenMax.to(lights, 2, { turnedOn: 9 , snap: { turnedOn: 1 }, onUpdate: onUpdateLights, repeat: -1, yoyo: true, ease: Power3.easeInOut });
+}
+
+function onUpdateLights() {
+    setLight(true, ~~lights.turnedOn);
+    if (~~lights.turnedOn !== lastLight) {
+        setLight(false, ~~lastLight);
+    }
+    lastLight = ~~lights.turnedOn;
+}
+
+socket.on('connect', function (data) {
+    socket.emit('join', 'Client is connected!');
+});
+
+socket.on('status', function (data) {
+    console.log(data);
+});
+
+/* Code For Lights STARTS HERE */

@@ -16,7 +16,7 @@ app.get('/', function (req, res, next) {
 });
 
 board.on("ready", function () {
-  for(let i = 2; i < 14; i++){
+  for(let i = 2; i < 11; i++){
     leds.push(new five.Led(i));
   }
 
