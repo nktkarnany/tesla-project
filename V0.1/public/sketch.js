@@ -36,6 +36,9 @@ let playBtn;
 let playIcon;
 let pauseIcon;
 
+//Stars
+let stars = [];
+
 // Setup
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -48,6 +51,11 @@ function setup() {
   colours[4] = color(255, 0, 116); // Orange
   colours[5] = color(250, 255, 0); // Yellow
   colours[6] = color(198, 2, 99);
+
+//setup Stars
+  for(let i=0; i<100; i++) {
+    stars[i] = new Star(random(0,width), random(0,horizon), random(1,2), width, height, i);
+  }
 
   // Draw background gradient
   canvasBg = drawBackground();
@@ -109,18 +117,14 @@ function setup() {
 function draw() {
   image(canvasBg, 0, 0);
 
-  stroke(colours[2]);
-  fill(colours[2]);
-  var galaxy = { 
-    locationX : random(width),
-    locationY : random(height),
-    size : random(1,6)
-  }
-  for (let i = 0; i < 10; i++) {
-    ellipse(mouseX ,mouseY, galaxy.size, galaxy.size);
-    ellipse(galaxy.locationX ,galaxy.locationY, galaxy.size, galaxy.size);
-  }
+  // Draw Stars
+  for(let i=0; i<stars.length; i++) {
+		stars[i].setup();
+	}
 
+  image(canvasSun, width / 2 - canvasSun.width / 2, 250);
+  image(canvasSun, width / 2 - canvasSun.width / 2, 250);
+  image(canvasSun, width / 2 - canvasSun.width / 2, 250);
   image(canvasSun, width / 2 - canvasSun.width / 2, 250);
 
   noStroke();
@@ -401,3 +405,29 @@ socket.on('status', function (data) {
 });
 
 /* Code For Lights STARTS HERE */
+
+function Star(x,y,r,width,height,arrayPosition) {
+  this.x = x;
+  this.y = y;
+  this.r = r;
+  this.width = width;
+  this.height = height;
+  this.arrayPosition = arrayPosition;
+  this.setup = function() {
+    this.move();
+    this.show();
+  }
+  this.move = function() {
+    this.x = this.x + random(-.25,.25);
+    this.y = this.y + random(-.25,.25);
+    this.r = random(1,2);
+  }
+  this.show = function() {
+    fill(color(255));
+    noStroke();
+    //rectMode();
+    ellipse(this.x, this.y, this.r*2, this.r*2);
+}
+
+return this;
+}
