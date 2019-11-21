@@ -15,6 +15,31 @@
     <script src="./sketch.js"></script>
 
     <style>
+        @font-face {
+            font-family: 'Rage';
+            src: url('./font/road_rage.woff');
+        }
+        
+        @font-face {
+            font-family: 'DS';
+            src: url('./font/ds_digi.TTF');
+        }
+        
+        @font-face {
+            font-family: 'DS-I';
+            src: url('./font/ds_digii.TTF');
+        }
+        
+        @font-face {
+            font-family: 'CP';
+            src: url('./font/cp_mono.otf');
+        }
+        
+        @font-face {
+            font-family: 'CP-L';
+            src: url('./font/cp_mono_light.otf');
+        }
+
         body {
             margin: 0;
             margin: 0;
@@ -42,11 +67,76 @@
             width: 100%;
             height: 100%;
         }
+
+        #song_name {
+            padding: 20px;
+            position: absolute;
+            bottom: 274px;
+            width: 100%;
+            text-align: center;
+            transform: translateX(-20px);
+        }
+
+        #song_name #title {
+            color: #7FF4F4;
+            font-size: 60px;
+            letter-spacing: 2px;
+            display: block;
+            font-family: 'Rage', sans-serif;
+        }
+
+        #song_name #artist {
+            color: white;
+            font-size: 25px;
+            display: block;
+            font-family: 'CP-L', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #music_progress {
+            position: absolute;
+            bottom: 120px;
+            width: 100%;
+            font-family: 'DS-I', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        #music_progress #curr_duration {
+            color: white;
+            font-size: 20px;
+            position: absolute;
+            left: 220px;
+        }
+
+        #music_progress #duration {
+            color: white;
+            font-size: 20px;
+            position: absolute;
+            right: 224px;
+        }
+
     </style>
 </head>
 
 <body>
 
+    <div id="song_name">
+        <span id="title">
+            Back of my mind
+        </span>
+        <span id="artist">
+            Two Feet Under
+        </span>
+    </div>
+    <div id="music_progress">
+        <span id="curr_duration">
+            0:56
+        </span>
+        <span id="duration">
+            3:41
+        </span>
+    </div>
     <div id="svgDiv">
         <svg width="584" height="193" viewBox="0 0 584 193" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path id="meter14" stroke="url(#paint0_linear)"

@@ -1,6 +1,6 @@
 
 // Array to store all songs
-const songsPath = ['./audio/toto.mp3', './audio/final.mp3', './audio/black.mp3'];
+const songsPath = ['./audio/fringe.mp3', './audio/final.mp3', './audio/black.mp3'];
 let songs = [];
 let songPlaying = 0;
 
@@ -17,13 +17,13 @@ let canvasMountain;
 let movement = 0;
 
 // variable to store the y coordinate for horizon 
-const horizon = 740;
+const horizon = 1060;
 
 // variable to store the amplitude of sound file loaded
 let amplitude;
 
 // Array to store the number of vertical lines to show whem music is playing
-let prevLevels = new Array(45);
+let prevLevels = new Array(30);
 
 // An object to store the meters(path elements) in the music progress bar svg
 let meters = [];
@@ -42,11 +42,12 @@ function setup() {
   pixelDensity(1);
 
   colours[0] = color(164, 0, 182); // Pink
-  colours[1] = color(0, 46, 68); // Night blue
+  colours[1] = color(0, 29, 40); // Night blue
   colours[2] = color(0, 255, 248); // Neon blue
   colours[3] = color(203, 0, 216); // Neon pink
-  colours[4] = color(243, 255, 81); // Yellow
-  colours[5] = color(249, 72, 106); // Orange
+  colours[4] = color(255, 0, 116); // Orange
+  colours[5] = color(250, 255, 0); // Yellow
+  colours[6] = color(198, 2, 99);
 
   // Draw background gradient
   canvasBg = drawBackground();
@@ -107,7 +108,19 @@ function setup() {
 
 function draw() {
   image(canvasBg, 0, 0);
-  image(canvasSun, width / 2 - canvasSun.width / 2, 60);
+
+  stroke("#ff0000");
+  var galaxy = { 
+    locationX : random(width),
+    locationY : random(height),
+    size : random(1,6)
+  }
+  for (let i = 0; i < 10; i++) {
+    ellipse(mouseX ,mouseY, galaxy.size, galaxy.size);
+    ellipse(galaxy.locationX ,galaxy.locationY, galaxy.size, galaxy.size);
+  }
+
+  image(canvasSun, width / 2 - canvasSun.width / 2, 250);
 
   noStroke();
   fill(colours[1]);
@@ -121,7 +134,7 @@ function draw() {
   }
 
   // Speed around 98bpm, Speed of terrain
-  movement += 0.0875;
+  movement += 0.1575;
   if (movement >= 1) {
     movement = 0;
   }
@@ -135,8 +148,8 @@ function draw() {
   let w = width / (prevLevels.length * spacing);
 
   // height range of the amplitude rectanges
-  let minHeight = 2;
-  let maxHeight = 300;
+  let minHeight = 0;
+  let maxHeight = 400;
 
   // add new level to end of array
   prevLevels.push(level);
@@ -150,8 +163,8 @@ function draw() {
     let x = map(i, prevLevels.length, 0, width/2, width);
     let h = map(prevLevels[i], 0, 0.5, minHeight, maxHeight);
 
-    fill(colours[0]);
-    stroke(colours[0]);
+    fill(colours[2]);
+    stroke(colours[2]);
 
     rect(x, horizon, w, -h);
     rect(width - x, horizon, w, -h);
@@ -190,8 +203,8 @@ function drawBackground() {
   // Draw gradient sky
   sky.noFill();
   for (let i = 0; i <= horizon; i++) {
-    const inter = map(i, 0, horizon, 0, 1);
-    const c = lerpColor(colours[0], colours[1], inter);
+    const inter = map(i, 0, horizon, 0, 0.85);
+    const c = lerpColor(colours[1], colours[6], inter);
     sky.stroke(c);
     sky.line(0, i, width, i);
   }
@@ -199,23 +212,23 @@ function drawBackground() {
 }
 
 function drawSun() {
-  const sun = createGraphics(400, 400);
+  const sun = createGraphics(600, 600);
   sun.noFill();
 
   for (let i = 0; i <= sun.height; i++) {
     // Draw or skip?
     if (
-      (i > 250 && i < 255) ||
-      (i > 292 && i < 300) ||
-      (i > 332 && i < 342) ||
-      (i > 373 && i < 387) ||
-      (i > 412 && i < 430) ||
-      (i > 452 && i < 475)
+      (i > 315 && i < 327) ||
+      (i > 365 && i < 377) ||
+      (i > 413 && i < 429) ||
+      (i > 460 && i < 482) ||
+      (i > 507 && i < 535) ||
+      (i > 552 && i < 590)
     ) {
       continue;
     } else {
       // Calc colour
-      const inter = map(i, 0, sun.height, 0, 1);
+      const inter = map(i, 0, sun.height, 0, 0.85);
       const c = lerpColor(colours[4], colours[5], inter);
       sun.stroke(c);
 
@@ -267,7 +280,7 @@ function keyPressed() {
   if (keyCode == 82) reset();
   if (keyCode == 39) playNext();
   if (keyCode == 37) playPrev();
-  // if (keyCode == 83) start();
+  if (keyCode == 83) start();
 }
 
 function reset() {
