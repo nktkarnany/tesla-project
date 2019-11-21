@@ -109,7 +109,8 @@ function setup() {
 function draw() {
   image(canvasBg, 0, 0);
 
-  stroke("#ff0000");
+  stroke(colours[2]);
+  fill(colours[2]);
   var galaxy = { 
     locationX : random(width),
     locationY : random(height),
