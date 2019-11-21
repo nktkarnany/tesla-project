@@ -72,9 +72,8 @@ function setup() {
   playIcon.addEventListener("click", playSwitch);
 
   // playing the song here
-  song.play();
-  amplitude.setInput(song);
-  playIcon.style.display = "none";
+  pauseIcon.style.display = "none";
+  resetMeters();
 
   // Adding click listener on each of the meters
   for(let i = 0; i < meters.length; i++) {
@@ -247,6 +246,7 @@ function playSwitch() {
     pauseIcon.style.display = "none";
   } else {
     song.play();
+    amplitude.setInput(song);
     pauseIcon.style.display = "block";
     playIcon.style.display = "none";
   }
@@ -255,6 +255,7 @@ function playSwitch() {
 function keyPressed() {
   if (keyCode == 32) playSwitch();
   if (keyCode == 82) reset();
+  console.log(keyCode);
 }
 
 function reset() {
@@ -263,6 +264,10 @@ function reset() {
   playIcon.style.display = "block";
   pauseIcon.style.display = "none";
 
+  resetMeters();
+}
+
+function resetMeters() {
   for(let i = 0; i < meters.length; i++) {
     let meter = meters[numMeters - i - 1];
     meter.classList.add("off");
