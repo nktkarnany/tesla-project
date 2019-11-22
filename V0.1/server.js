@@ -31,8 +31,6 @@ board.on("ready", function () {
       } else {
         leds[data.id].off();
       }
-      client.emit('status', data);
-      client.broadcast.emit('status', data);
     });
   });
 });

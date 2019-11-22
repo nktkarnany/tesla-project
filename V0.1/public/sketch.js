@@ -1,4 +1,3 @@
-
 // Array to store all songs
 const songsPath = ['./audio/fringe.mp3', './audio/final.mp3', './audio/black.mp3'];
 let songs = [];
@@ -38,6 +37,36 @@ let pauseIcon;
 
 //Stars
 let stars = [];
+
+// Socket for the server
+let socket = io.connect(window.location.hostname + ':' + 3000);
+
+// Array for saving the lights
+let lights = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+// beat parameters
+let isBeating = true;
+
+// :: Beat Detect Variables
+// how many draw loop frames before the beatCutoff starts to decay
+// so that another beat can be triggered.
+// frameRate() is usually around 60 frames per second,
+// so 20 fps = 3 beats per second, meaning if the song is over 180 BPM,
+// we wont respond to every beat.
+let beatHoldFrames = 30;
+
+// what amplitude level can trigger a beat?
+let beatThreshold = 0.11; 
+
+// When we have a beat, beatCutoff will be reset to 1.1*beatThreshold, and then decay
+// Level must be greater than beatThreshold and beatCutoff before the next beat can trigger.
+let beatCutoff = 0;
+let beatDecayRate = 0.98; // how fast does beat cutoff decay?
+let framesSinceLastBeat = 0; // once this equals beatHoldFrames, beatCutoff starts to decay.
+
+let fft, peakDetect;
+
+let isBlinking = false;
 
 // Setup
 function setup() {
@@ -112,6 +141,9 @@ function setup() {
 
   }
 
+  fft = new p5.FFT();
+  peakDetect = new p5.PeakDetect(4000, 12000, 0.2);
+
 }
 
 function draw() {
@@ -147,6 +179,7 @@ function draw() {
   /* Code to draw the amplitude lines STARTS HERE */
 
   let level = amplitude.getLevel();
+  detectBeat(level);
 
   // rectangle variables
   let spacing = 5;
@@ -181,6 +214,26 @@ function draw() {
 
   if (typeof song != "undefined" && song.isPlaying()) {
 
+    if (isBeating) {
+      if (!isBlinking) blinkingLights();
+    } else {
+      if (!isBlinking) reverseBlinkingLights();
+    }
+
+    // peakDetect accepts an fft post-analysis
+    fft.analyze();
+    peakDetect.update(fft);
+  
+    if ( peakDetect.isDetected ) {
+      resetLights();
+      for (let i = 0; i < lights.length; i++) {
+        lights[i] = 1;
+        updateLights();
+      }
+    } else {
+      resetLights();
+    }
+
     let c = song.duration() / numMeters;
     let currDuration = Math.round(song.currentTime()/c);
 
@@ -195,6 +248,26 @@ function draw() {
   }
 
   /* Code to show the music progress in meters ENDS HERE */
+}
+
+function detectBeat(level) {
+  if (level  > beatCutoff && level > beatThreshold){
+    onBeat();
+    beatCutoff = level *1.2;
+    framesSinceLastBeat = 0;
+  } else{
+    if (framesSinceLastBeat <= beatHoldFrames){
+      framesSinceLastBeat ++;
+    }
+    else{
+      beatCutoff *= beatDecayRate;
+      beatCutoff = Math.max(beatCutoff, beatThreshold);
+    }
+  }
+}
+
+function onBeat() {
+  isBeating = !isBeating;
 }
 
 function easeInExpo(t, b, c, d) {
@@ -285,7 +358,7 @@ function keyPressed() {
   if (keyCode == 82) reset();
   if (keyCode == 39) playNext();
   if (keyCode == 37) playPrev();
-  if (keyCode == 83) start();
+  if (keyCode == 83) blinkingLights();
 }
 
 function reset() {
@@ -355,6 +428,7 @@ function playSong() {
 
 function pauseSong() {
   song.pause();
+  resetLights();
 }
 
 function logMap(val, inMin, inMax, outMin, outMax) {
@@ -368,43 +442,6 @@ function logMap(val, inMin, inMax, outMin, outMax) {
   var b = outMin - a * Math.log10(inMin);
   return a * Math.log10(val + offset) + b;
 }
-
-/* Code For Lights STARTS HERE */
-
-let socket = io.connect(window.location.hostname + ':' + 3000);
-
-const lights = { turnedOn: 0 };
-
-let lastLight = 0;
-
-function setLight(value, id) {
-    socket.emit('status', {
-        on: value,
-        id: id,
-    });
-}
-
-function start() {
-    TweenMax.to(lights, 2, { turnedOn: 9 , snap: { turnedOn: 1 }, onUpdate: onUpdateLights, repeat: -1, yoyo: true, ease: Power3.easeInOut });
-}
-
-function onUpdateLights() {
-    setLight(true, ~~lights.turnedOn);
-    if (~~lights.turnedOn !== lastLight) {
-        setLight(false, ~~lastLight);
-    }
-    lastLight = ~~lights.turnedOn;
-}
-
-socket.on('connect', function (data) {
-    socket.emit('join', 'Client is connected!');
-});
-
-socket.on('status', function (data) {
-    console.log(data);
-});
-
-/* Code For Lights STARTS HERE */
 
 function Star(x,y,r,width,height,arrayPosition) {
   this.x = x;
@@ -431,3 +468,56 @@ function Star(x,y,r,width,height,arrayPosition) {
 
 return this;
 }
+
+/* Code For Lights STARTS HERE */
+
+function updateLights() {
+  for (let i = 0; i < lights.length; i++) {
+    socket.emit('status', {
+      on: lights[i] == 1,
+      id: i,
+    });
+  }
+  //TweenMax.to(lights, 2, { turnedOn: 8 , snap: { turnedOn: 1 }, onUpdate: onUpdateLights, yoyo: true, ease: Power3.easeInOut });
+}
+
+function resetLights() {
+  lights = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  updateLights();
+}
+
+function blinkingLights() {
+  isBlinking = true;
+  (function myLoop (i) {
+    setTimeout(function () {
+      resetLights();
+      lights[lights.length - i] = 1;
+      updateLights();
+      if (--i) myLoop(i);
+    }, 100);
+  })(lights.length);
+  window.setTimeout(function() {
+    isBlinking = false;
+  }, 1000);
+}
+
+function reverseBlinkingLights() {
+  isBlinking = true;
+  (function myLoop (i) {
+    setTimeout(function () {
+      resetLights();
+      lights[i - 1] = 1;
+      updateLights();
+      if (--i) myLoop(i);
+    }, 100);
+  })(lights.length);
+  window.setTimeout(function() {
+    isBlinking = false;
+  }, 1000);
+}
+
+socket.on('connect', function (data) {
+    socket.emit('join', 'Client is connected!');
+});
+
+/* Code For Lights ENDS HERE */
