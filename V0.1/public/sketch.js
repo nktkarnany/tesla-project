@@ -2,6 +2,20 @@
 const songsPath = ['./audio/fringe.mp3', './audio/final.mp3', './audio/black.mp3'];
 let songs = [];
 let songPlaying = 0;
+let songDetails = [
+  {
+    title: 'Fringe Society',
+    artist: 'Sami Matar - Topic'
+  },
+  {
+    title: 'The Final Countdown',
+    artist: 'Europe'
+  },
+  {
+    title: 'Back In Black',
+    artist: 'AC DC'
+  }
+];
 
 // Arrays to save all the colors
 const colours = [];
@@ -237,6 +251,10 @@ function draw() {
     let c = song.duration() / numMeters;
     let currDuration = Math.round(song.currentTime()/c);
 
+    let minutes = Math.floor(song.currentTime() / 60);
+    let seconds = Math.round(song.currentTime() - minutes * 60);
+    document.getElementById("curr_duration").innerText = minutes + ":" + seconds;
+
     for(let i = 0; i < meters.length; i++) {
       let meter = meters[numMeters - i - 1];
       if (i <= currDuration) {
@@ -424,6 +442,13 @@ function nextSong(flag) {
 function playSong() {
   song.play();
   amplitude.setInput(song);
+
+  document.getElementById("title").innerText = songDetails[songPlaying].title;
+  document.getElementById("artist").innerText = songDetails[songPlaying].artist;
+
+  let minutes = Math.floor(song.duration() / 60);
+  let seconds = Math.round(song.duration() - minutes * 60);
+  document.getElementById("duration").innerText = minutes + ":" + seconds;
 }
 
 function pauseSong() {
